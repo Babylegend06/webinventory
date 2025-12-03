@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>InventoriKu - Firebase</title>
+  <style>
+    :root {
+      --primary: #4361ee;
+      --danger: #f72585;
+      --success: #4cc9f0;
+      --light: #f8f9fa;
+      --dark: #212529;
+      --gray: #6c757d;
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+    body {
+      background-color: #f5f7fb;
+      color: var(--dark);
+    }
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    nav button {
+      background: transparent;
+      border: none;
+      color: white;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      margin: 0 0.5rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    nav button:hover {
+      background: rgba(255,255,255,0.2);
+    }
+    nav button.active {
+      background: rgba(255,255,255,0.3);
+    }
+    main {
+      padding: 2rem;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .page {
+      display: none;
+    }
+    .page.active {
+      display: block;
+    }
+    h2 {
+      margin-bottom: 1.5rem;
+      color: var(--primary);
+    }
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.4rem;
+      font-weight: 600;
+    }
+    input, select {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+    button[type="submit"] {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 1rem;
+    }
+    button[type="submit"]:hover {
+      opacity: 0.9;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    th, td {
+      padding: 0.9rem;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+    th {
+      background: var(--primary);
+      color: white;
+    }
+    tr:hover {
+      background: #f0f4ff;
+    }
+    .log-entry {
+      font-size: 0.9rem;
+      color: var(--gray);
+    }
+    .summary-card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      margin-bottom: 1.5rem;
+    }
+    .summary-value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--primary);
+    }
+    #status {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      padding: 0.5rem 1rem;
+      background: var(--success);
+      color: white;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      display: none;
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
+
+<div id="status">Menyambung ke Firebase...</div>
+
+<header>
+  <h1>InventoriKu</h1>
+  <nav>
+    <button class="nav-btn active" data-page="dashboard">Dashboard</button>
+    <button class="nav-btn" data-page="master">Master List</button>
+    <button class="nav-btn" data-page="stockin">Stock In</button>
+    <button class="nav-btn" data-page="stockout">Stock Out</button>
+    <button class="nav-btn" data-page="log">Log</button>
+  </nav>
+</header>
+
+<main>
+  <div id="dashboard" class="page active">
+    <h2>📊 Dashboard</h2>
+    <div class="summary-card">
+      <p>Total Jenis Item</p>
+      <div class="summary-value" id="total-items">0</div>
+    </div>
+    <div class="summary-card">
+      <p>Total Stok Keseluruhan</p>
+      <div class="summary-value" id="total-stock">0</div>
+    </div>
+    <div class="summary-card">
+      <p>Aktivitas Terakhir</p>
+      <div id="latest-activity">Menyambung...</div>
+    </div>
+  </div>
+
+  <div id="master" class="page">
+    <h2>📋 Master List</h2>
+    <table id="item-table">
+      <thead>
+        <tr>
+          <th>Nama Item</th>
+          <th>Stok</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div id="stockin" class="page">
+    <h2>📥 Stock In</h2>
+    <form id="form-in">
+      <div class="form-group">
+        <label>Nama Item</label>
+        <input type="text" id="in-name" placeholder="Contoh: Laptop" required />
+      </div>
+      <div class="form-group">
+        <label>Jumlah</label>
+        <input type="number" id="in-qty" min="1" placeholder="10" required />
+      </div>
+      <button type="submit">Tambah Stok</button>
+    </form>
+  </div>
+
+  <div id="stockout" class="page">
+    <h2>📤 Stock Out</h2>
+    <form id="form-out">
+      <div class="form-group">
+        <label>Nama Item</label>
+        <input type="text" id="out-name" placeholder="Contoh: Laptop" required />
+      </div>
+      <div class="form-group">
+        <label>Jumlah</label>
+        <input type="number" id="out-qty" min="1" placeholder="5" required />
+      </div>
+      <button type="submit">Kurangi Stok</button>
+    </form>
+  </div>
+
+  <div id="log" class="page">
+    <h2>📜 Inventory Movement Log</h2>
+    <div id="log-entries"></div>
+  </div>
+</main>
+
+<!-- Firebase Modular SDK via CDN -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+  // 🔑 Konfigurasi Firebase Anda (sudah diperbaiki: tanpa spasi!)
+  const firebaseConfig = {
+    apiKey: "AIzaSyAIk6aEQJnuK4Vwn9gD3RZ2My6fi04DArM",
+    authDomain: "inventory-app-ab414.firebaseapp.com",
+    databaseURL: "https://inventory-app-ab414-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "inventory-app-ab414",
+    storageBucket: "inventory-app-ab414.firebasestorage.app",
+    messagingSenderId: "982818040940",
+    appId: "1:982818040940:web:bb439dcac05bea3bf97c49"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const inventoryRef = ref(db, 'inventory');
+
+  let inventory = {};
+  let logs = [];
+
+  // Status popup
+  function showStatus(msg, isError = false) {
+    let status = document.getElementById('status');
+    if (!status) {
+      status = document.createElement('div');
+      status.id = 'status';
+      status.style.cssText = `
+        position: fixed; top: 10px; right: 10px; padding: 0.5rem 1rem;
+        background: ${isError ? '#f72585' : '#4cc9f0'}; color: white;
+        border-radius: 6px; font-size: 0.9rem; z-index: 1000;
+      `;
+      document.body.appendChild(status);
+    }
+    status.textContent = msg;
+    status.style.display = 'block';
+    setTimeout(() => status.style.display = 'none', 2000);
+  }
+
+  function saveData() {
+    showStatus('Menyimpan...');
+    set(inventoryRef, { inventory, logs })
+      .then(() => showStatus('✅ Tersimpan!'))
+      .catch(err => {
+        console.error(err);
+        showStatus('❌ Gagal!', true);
+      });
+  }
+
+  function addLog(text) {
+    const time = new Date().toLocaleString('id-ID');
+    logs.push({ time, text });
+    saveData();
+  }
+
+  function renderAll() {
+    renderDashboard();
+    renderMasterList();
+    renderLog();
+  }
+
+  function renderDashboard() {
+    const totalItems = Object.keys(inventory).length;
+    const totalStock = Object.values(inventory).reduce((sum, qty) => sum + qty, 0);
+    const latest = logs.length ? logs[logs.length - 1].text : "Belum ada aktivitas";
+    setText('total-items', totalItems);
+    setText('total-stock', totalStock);
+    setText('latest-activity', latest);
+  }
+
+  function setText(id, text) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  }
+
+  function renderMasterList() {
+    const tbody = document.querySelector('#item-table tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    for (const [name, qty] of Object.entries(inventory)) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${name}</td><td>${qty}</td>`;
+      tbody.appendChild(tr);
+    }
+  }
+
+  function renderLog() {
+    const logDiv = document.getElementById('log-entries');
+    if (!logDiv) return;
+    logDiv.innerHTML = '';
+    logs.slice().reverse().forEach(entry => {
+      const div = document.createElement('div');
+      div.className = 'log-entry';
+      div.textContent = `[${entry.time}] ${entry.text}`;
+      logDiv.appendChild(div);
+    });
+  }
+
+  // Navigation
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      const page = btn.dataset.page;
+      document.getElementById(page)?.classList.add('active');
+      btn.classList.add('active');
+    });
+  });
+
+  // Form handlers
+  document.getElementById('form-in')?.addEventListener('submit', e => {
+    e.preventDefault();
+    const name = e.target.querySelector('#in-name').value.trim();
+    const qty = parseInt(e.target.querySelector('#in-qty').value);
+    if (!name || qty <= 0) return;
+    inventory[name] = (inventory[name] || 0) + qty;
+    addLog(`➕ Stock In: ${name} (+${qty})`);
+    e.target.reset();
+  });
+
+  document.getElementById('form-out')?.addEventListener('submit', e => {
+    e.preventDefault();
+    const name = e.target.querySelector('#out-name').value.trim();
+    const qty = parseInt(e.target.querySelector('#out-qty').value);
+    if (!name || qty <= 0) return;
+    if (!inventory[name] || inventory[name] < qty) {
+      alert('Stok tidak mencukupi!');
+      return;
+    }
+    inventory[name] -= qty;
+    if (inventory[name] === 0) delete inventory[name];
+    addLog(`➖ Stock Out: ${name} (-${qty})`);
+    e.target.reset();
+  });
+
+  // Load from Firebase
+  onValue(inventoryRef, snapshot => {
+    const data = snapshot.val();
+    if (data) {
+      inventory = data.inventory || {};
+      logs = data.logs || [];
+      renderAll();
+      showStatus('✅ Connected to Firebase');
+    } else {
+      inventory = {};
+      logs = [];
+      renderAll();
+    }
+  });
+</script>
+
+</body>
+</html>
