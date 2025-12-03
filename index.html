@@ -1,0 +1,154 @@
+<!-- Firebase App (core) -->
+<script type="module">
+  // Import Firebase functions from CDN
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyAIk6aEQJnuK4Vwn9gD3RZ2My6fi04DArM",
+    authDomain: "inventory-app-ab414.firebaseapp.com",
+    databaseURL: "https://inventory-app-ab414-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "inventory-app-ab414",
+    storageBucket: "inventory-app-ab414.firebasestorage.app",
+    messagingSenderId: "982818040940",
+    appId: "1:982818040940:web:bb439dcac05bea3bf97c49"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const inventoryRef = ref(db, 'inventory');
+
+  // === State & UI functions ===
+  let inventory = {};
+  let logs = [];
+
+  function showStatus(msg, isError = false) {
+    let status = document.getElementById('status');
+    if (!status) {
+      status = document.createElement('div');
+      status.id = 'status';
+      status.style.cssText = `
+        position: fixed; top: 10px; right: 10px; padding: 0.5rem 1rem;
+        background: ${isError ? '#f72585' : '#4cc9f0'}; color: white;
+        border-radius: 6px; font-size: 0.9rem; z-index: 1000;
+      `;
+      document.body.appendChild(status);
+    }
+    status.textContent = msg;
+    status.style.display = 'block';
+    setTimeout(() => status.style.display = 'none', 2000);
+  }
+
+  function saveData() {
+    showStatus('Menyimpan...');
+    set(inventoryRef, { inventory, logs })
+      .then(() => showStatus('Tersimpan!'))
+      .catch(err => {
+        console.error(err);
+        showStatus('Gagal simpan!', true);
+      });
+  }
+
+  function addLog(text) {
+    const time = new Date().toLocaleString('id-ID');
+    logs.push({ time, text });
+    saveData();
+  }
+
+  function renderAll() {
+    renderDashboard();
+    renderMasterList();
+    renderLog();
+  }
+
+  function renderDashboard() {
+    const totalItems = Object.keys(inventory).length;
+    const totalStock = Object.values(inventory).reduce((sum, qty) => sum + qty, 0);
+    const latest = logs.length ? logs[logs.length - 1].text : "Belum ada aktivitas";
+
+    setText('total-items', totalItems);
+    setText('total-stock', totalStock);
+    setText('latest-activity', latest);
+  }
+
+  function setText(id, text) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  }
+
+  function renderMasterList() {
+    const tbody = document.querySelector('#item-table tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    for (const [name, qty] of Object.entries(inventory)) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${name}</td><td>${qty}</td>`;
+      tbody.appendChild(tr);
+    }
+  }
+
+  function renderLog() {
+    const logDiv = document.getElementById('log-entries');
+    if (!logDiv) return;
+    logDiv.innerHTML = '';
+    logs.slice().reverse().forEach(entry => {
+      const div = document.createElement('div');
+      div.className = 'log-entry';
+      div.textContent = `[${entry.time}] ${entry.text}`;
+      logDiv.appendChild(div);
+    });
+  }
+
+  // === Event Listeners ===
+  document.addEventListener('DOMContentLoaded', () => {
+    // Navigation
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        const page = btn.dataset.page;
+        document.getElementById(page)?.classList.add('active');
+        btn.classList.add('active');
+      });
+    });
+
+    // Stock In
+    document.getElementById('form-in')?.addEventListener('submit', e => {
+      e.preventDefault();
+      const name = document.getElementById('in-name')?.value.trim();
+      const qty = parseInt(document.getElementById('in-qty')?.value);
+      if (!name || qty <= 0) return;
+      inventory[name] = (inventory[name] || 0) + qty;
+      addLog(`➕ Stock In: ${name} (+${qty})`);
+      e.target.reset();
+    });
+
+    // Stock Out
+    document.getElementById('form-out')?.addEventListener('submit', e => {
+      e.preventDefault();
+      const name = document.getElementById('out-name')?.value.trim();
+      const qty = parseInt(document.getElementById('out-qty')?.value);
+      if (!name || qty <= 0) return;
+      if (!inventory[name] || inventory[name] < qty) {
+        alert('Stok tidak mencukupi!');
+        return;
+      }
+      inventory[name] -= qty;
+      if (inventory[name] === 0) delete inventory[name];
+      addLog(`➖ Stock Out: ${name} (-${qty})`);
+      e.target.reset();
+    });
+
+    // Load data from Firebase
+    onValue(inventoryRef, snapshot => {
+      const data = snapshot.val();
+      if (data) {
+        inventory = data.inventory || {};
+        logs = data.logs || [];
+        renderAll();
+      }
+    });
+  });
+</script>
