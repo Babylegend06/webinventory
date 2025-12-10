@@ -19,25 +19,26 @@
     .page { display: none; }
     .active-page { display: block; }
 
-    /* Login */
-    #loginPage {
+    /* Auth Page */
+    #authPage {
       display: flex; justify-content: center; align-items: center; height: 100vh;
       background: var(--primary); color: white;
     }
-    #loginForm {
+    #authForm {
       background: white; padding: 40px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
       width: 320px; text-align: center;
     }
-    #loginForm input {
+    #authForm input {
       width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc;
       border-radius: 5px;
     }
-    #loginForm button {
+    #authForm button {
       width: 100%; padding: 10px; background: var(--primary); color: white;
       border: none; border-radius: 5px; font-weight: bold; cursor: pointer;
     }
+    #authError { color: var(--danger); margin-top: 10px; font-size: 0.9rem; }
 
-    /* Dashboard */
+    /* Dashboard UI */
     header {
       text-align: center; margin-bottom: 20px;
     }
@@ -92,18 +93,22 @@
       max-height: 80vh; overflow-y: auto;
     }
     #stockCard h3 { margin-bottom: 15px; color: var(--primary); }
-    #closeStockCard { margin-top: 15px; background: #6c757d; color: white; padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; }
+    #closeStockCard {
+      margin-top: 15px; background: #6c757d; color: white; padding: 8px 16px;
+      border: none; border-radius: 5px; cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
-<!-- LOGIN PAGE -->
-<div id="loginPage" class="active-page">
-  <form id="loginForm">
+<!-- AUTH PAGE -->
+<div id="authPage" class="active-page">
+  <form id="authForm">
     <h2>FIKOS Login</h2>
     <input type="email" id="email" placeholder="Email" required />
     <input type="password" id="password" placeholder="Password" required />
     <button type="submit">Login</button>
+    <div id="authError"></div>
   </form>
 </div>
 
@@ -121,7 +126,6 @@
     <button class="tab-btn" data-tab="tab4">Inventory Movement</button>
   </div>
 
-  <!-- TAB 1: TAMBAH ITEM / KATEGORI -->
   <div id="tab1" class="tab-content">
     <h3>Tambah Kategori</h3>
     <div class="form-grid">
@@ -145,7 +149,6 @@
     </div>
   </div>
 
-  <!-- TAB 2: REKOD JUAL -->
   <div id="tab2" class="tab-content" style="display:none">
     <h3>Rekod Jual</h3>
     <div class="form-grid">
@@ -156,7 +159,6 @@
     </div>
   </div>
 
-  <!-- TAB 3: SENARAI INVENTORI -->
   <div id="tab3" class="tab-content" style="display:none">
     <h3>Senarai Inventori</h3>
     <table>
@@ -177,7 +179,6 @@
     </table>
   </div>
 
-  <!-- TAB 4: INVENTORY MOVEMENT -->
   <div id="tab4" class="tab-content" style="display:none">
     <h3>Inventory Movement</h3>
     <table>
@@ -210,6 +211,7 @@
 
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
 <script>
@@ -225,11 +227,15 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
 const db = firebase.database();
 const inventoryRef = db.ref('fikos/inventory');
 const movementRef = db.ref('fikos/movement');
 const categoriesRef = db.ref('fikos/categories');
 const lastSKURef = db.ref('fikos/lastSKU');
+
+// --- Hanya benarkan UID spesifik ---
+const ALLOWED_UID = "18v7cNxp63OwwhwIZNmJdodG5wE3";
 
 // --- STATE ---
 let categories = [];
@@ -238,19 +244,32 @@ let movement = [];
 let lastSKU = {};
 
 // --- AUTH ---
-const loginForm = document.getElementById('loginForm');
-loginForm.addEventListener('submit', e => {
+document.getElementById('authForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = document.getElementById('email').value.trim();
-  const pass = document.getElementById('password').value;
-  if (email === 'alip1234@gmail.com' && pass === 'alip1234') {
-    document.getElementById('loginPage').classList.remove('active-page');
-    document.getElementById('dashboard').classList.add('active-page');
-    loadData();
-  } else {
-    alert('Email atau password salah!');
+  const password = document.getElementById('password').value;
+  const errorDiv = document.getElementById('authError');
+  errorDiv.textContent = '';
+
+  try {
+    const userCredential = await auth.signInWithEmailAndPassword(email, password);
+    const user = userCredential.user;
+
+    if (user.uid !== ALLOWED_UID) {
+      await auth.signOut();
+      errorDiv.textContent = "⛔ Akses ditolak. Anda tidak dibenarkan.";
+    } else {
+      document.getElementById('authPage').classList.remove('active-page');
+      document.getElementById('dashboard').classList.add('active-page');
+      loadData();
+    }
+  } catch (err) {
+    errorDiv.textContent = "❌ " + (err.message || "Ralat tidak diketahui");
   }
 });
+
+// --- LOGOUT (jika perlu) ---
+// Tambah butang logout jika mahu
 
 // --- TABS ---
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -262,7 +281,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-// --- LOAD DATA FROM FIREBASE ---
+// --- LOAD DATA ---
 function loadData() {
   categoriesRef.on('value', snap => {
     categories = snap.val() || [];
@@ -276,23 +295,22 @@ function loadData() {
     movement = snap.val() || [];
     renderMovementTable();
   });
-  db.ref('fikos/lastSKU').on('value', snap => {
+  lastSKURef.on('value', snap => {
     lastSKU = snap.val() || {};
   });
 }
 
-// --- SAVE TO FIREBASE ---
+// --- SAVE ---
 function saveData() {
   inventoryRef.set(inventory);
   movementRef.set(movement);
   categoriesRef.set(categories);
-  db.ref('fikos/lastSKU').set(lastSKU);
+  lastSKURef.set(lastSKU);
 }
 
 // --- RENDER ---
 function renderCategories() {
-  const selects = ['item_category', 'trans_category'];
-  selects.forEach(id => {
+  ['item_category', 'trans_category'].forEach(id => {
     const sel = document.getElementById(id);
     sel.innerHTML = '<option value="">-- Pilih --</option>';
     categories.forEach(cat => {
@@ -318,10 +336,9 @@ function renderTransItemDropdown() {
       sel.appendChild(opt);
     });
 }
-
 document.getElementById('trans_category').addEventListener('change', renderTransItemDropdown);
 
-// --- STATUS STOK ---
+// --- STATUS ---
 function getStatusClass(qty) {
   if (qty >= 10) return 'status-tinggi';
   if (qty >= 5) return 'status-sederhana';
@@ -333,7 +350,7 @@ function getStatusText(qty) {
   return 'Rendah';
 }
 
-// --- RENDER TABLES ---
+// --- TABLES ---
 function renderInventoryTable() {
   const tbody = document.getElementById('inventoryTable');
   tbody.innerHTML = '';
@@ -346,7 +363,7 @@ function renderInventoryTable() {
       <td>${i.name}</td>
       <td>${i.category}</td>
       <td>${i.qty}</td>
-      <td>${i.location}</td>
+      <td>${i.location || '-'}</td>
       <td>${parseFloat(i.cost).toFixed(2)}</td>
       <td>${parseFloat(i.price).toFixed(2)}</td>
       <td>${(i.price - i.cost).toFixed(2)}</td>
@@ -381,20 +398,20 @@ function showStockCard(kodeItem) {
   document.getElementById('stockQty').textContent = item.qty;
   document.getElementById('stockLocation').textContent = item.location || '-';
 
-  // Nilai stok (jumlah semua batch)
   let totalValue = 0;
+  const batchList = document.getElementById('batchList');
   if (item.batches && item.batches.length) {
     totalValue = item.batches.reduce((sum, b) => sum + (b.qty * b.cost), 0);
-    const batchList = document.getElementById('batchList');
     batchList.innerHTML = '';
     item.batches.forEach(b => {
       const div = document.createElement('div');
-      div.textContent = `${new Date(b.date).toLocaleString('ms-MY')} — ${b.qty} unit @ RM${b.cost.toFixed(2)} (${b.location || '-'})`;
+      const date = new Date(b.date).toLocaleString('ms-MY');
+      div.textContent = `${date} — ${b.qty} unit @ RM${b.cost.toFixed(2)} (${b.location || '-'})`;
       batchList.appendChild(div);
     });
   } else {
     totalValue = item.qty * item.cost;
-    document.getElementById('batchList').innerHTML = '<em>Tiada data batch (versi lama)</em>';
+    batchList.innerHTML = '<em>Tiada data batch (versi lama)</em>';
   }
 
   document.getElementById('stockValue').textContent = totalValue.toFixed(2);
@@ -424,13 +441,7 @@ document.getElementById('deleteCategoryBtn').addEventListener('click', () => {
   if (!confirm(`Padam kategori "${cat}" dan semua item di dalamnya?`)) return;
   
   inventory = inventory.filter(i => i.category !== cat);
-  movement.push({
-    kodeItem: '*',
-    action: `Padam kategori: ${cat}`,
-    qty: 0,
-    price: 0,
-    date: new Date().toLocaleString('ms-MY')
-  });
+  movement.push({ kodeItem: '*', action: `Padam kategori: ${cat}`, qty: 0, price: 0, date: new Date().toLocaleString('ms-MY') });
   categories = categories.filter(c => c !== cat);
   delete lastSKU[cat];
   saveData();
@@ -460,7 +471,6 @@ document.getElementById('addItemBtn').addEventListener('click', () => {
     return alert('Kod Item sudah wujud');
   }
 
-  // Simpan dalam batch (untuk FIFO)
   const newItem = {
     kodeItem,
     name,
@@ -470,12 +480,7 @@ document.getElementById('addItemBtn').addEventListener('click', () => {
     cost,
     price,
     minStock,
-    batches: [{
-      date: new Date().toISOString(),
-      qty,
-      cost,
-      location: loc
-    }]
+    batches: [{ date: new Date().toISOString(), qty, cost, location: loc }]
   };
 
   inventory.push(newItem);
@@ -488,14 +493,10 @@ document.getElementById('addItemBtn').addEventListener('click', () => {
   });
 
   saveData();
-  alert(`Item ditambah: ${kodeItem}`);
-  document.getElementById('item_sku').value = '';
-  document.getElementById('item_name').value = '';
-  document.getElementById('item_qty').value = '';
-  document.getElementById('item_location').value = '';
-  document.getElementById('item_cost').value = '';
-  document.getElementById('item_price').value = '';
-  document.getElementById('item_min_stock').value = '5';
+  alert(`✅ Item ditambah: ${kodeItem}`);
+  ['item_sku','item_name','item_qty','item_location','item_cost','item_price','item_min_stock'].forEach(id => {
+    document.getElementById(id).value = id === 'item_min_stock' ? '5' : '';
+  });
 });
 
 // --- PADAM ITEM ---
@@ -515,7 +516,7 @@ document.getElementById('deleteItemBtn').addEventListener('click', () => {
   saveData();
 });
 
-// --- REKOD JUAL (FIFO) ---
+// --- JUAL (FIFO) ---
 document.getElementById('transBtn').addEventListener('click', () => {
   const kodeItem = document.getElementById('trans_item').value;
   const qty = parseInt(document.getElementById('trans_qty').value);
@@ -525,21 +526,17 @@ document.getElementById('transBtn').addEventListener('click', () => {
   if (!item) return alert('Item tidak dijumpai');
   if (qty > item.qty) return alert('Stok tidak mencukupi');
 
-  // FIFO: kurangkan dari batch paling lama
   let remaining = qty;
-  let totalCost = 0;
   if (item.batches && item.batches.length) {
     for (let i = 0; i < item.batches.length && remaining > 0; i++) {
       const batch = item.batches[i];
       if (batch.qty >= remaining) {
-        totalCost += remaining * batch.cost;
         batch.qty -= remaining;
         remaining = 0;
       } else {
-        totalCost += batch.qty * batch.cost;
         remaining -= batch.qty;
         item.batches.splice(i, 1);
-        i--; // adjust index
+        i--;
       }
     }
   }
@@ -556,7 +553,6 @@ document.getElementById('transBtn').addEventListener('click', () => {
   saveData();
   document.getElementById('trans_qty').value = '';
 });
-
 </script>
 </body>
 </html>
