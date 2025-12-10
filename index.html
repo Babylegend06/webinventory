@@ -1,509 +1,562 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ms">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Perekodan Inventory</title>
+  <title>FIKOS - Perekodan Inventory</title>
   <style>
     :root {
-      --primary: #4361ee;
-      --success: #4cc9f0;
-      --danger: #f72585;
-      --dark: #212529;
-      --gray: #6c757d;
+      --primary: #007bff;
+      --success: #28a745;
+      --warning: #ffc107;
+      --danger: #dc3545;
       --light: #f8f9fa;
+      --dark: #343a40;
     }
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
-    body {
-      background-color: #f9fbfd;
-      color: var(--dark);
-    }
-    /* PIN Modal */
-    #auth-modal {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 9999;
-    }
-    #auth-modal .card {
-      background: white; padding: 2rem; border-radius: 12px; width: 300px; text-align: center;
-    }
-    #auth-modal input {
-      width: 100%; padding: 0.75rem; margin: 1rem 0; border: 1px solid #ddd; border-radius: 6px; font-size: 1.1rem;
-    }
-    /* Header */
-    header {
-      background: white;
-      padding: 1.2rem 2rem;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      align-items: center;
-    }
-    .logo-text h1 {
-      font-size: 1.8rem; color: var(--primary); margin-bottom: 0.2rem;
-    }
-    .logo-text p {
-      font-size: 0.95rem; color: var(--gray);
-    }
-    nav button {
-      background: transparent; border: none; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600;
-      cursor: pointer; margin: 0 0.3rem;
-    }
-    nav button:hover, nav button.active {
-      background: #eef2ff; color: var(--primary);
-    }
-    main {
-      padding: 2rem; max-width: 1000px; margin: 0 auto;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+    body { background: #f4f6f8; }
+    .container { max-width: 1200px; margin: auto; padding: 20px; }
     .page { display: none; }
-    .page.active { display: block; }
-    h2 {
-      margin: 0 0 1.5rem 0; color: var(--primary);
+    .active-page { display: block; }
+
+    /* Login */
+    #loginPage {
+      display: flex; justify-content: center; align-items: center; height: 100vh;
+      background: var(--primary); color: white;
     }
-    .form-group {
-      margin-bottom: 1.2rem;
+    #loginForm {
+      background: white; padding: 40px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      width: 320px; text-align: center;
     }
-    label {
-      display: block; margin-bottom: 0.4rem; font-weight: 600;
+    #loginForm input {
+      width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    #loginForm button {
+      width: 100%; padding: 10px; background: var(--primary); color: white;
+      border: none; border-radius: 5px; font-weight: bold; cursor: pointer;
+    }
+
+    /* Dashboard */
+    header {
+      text-align: center; margin-bottom: 20px;
+    }
+    header h1 { color: var(--primary); font-size: 2.2rem; }
+    header p { color: #6c757d; margin-top: 5px; }
+
+    .tabs { display: flex; gap: 5px; margin-bottom: 20px; }
+    .tabs button {
+      flex: 1; padding: 12px; background: #e1e5ea; color: #333; font-weight: bold;
+      border: none; border-radius: 5px 5px 0 0; cursor: pointer;
+    }
+    .tabs button.active { background: var(--primary); color: white; }
+    .tabs button:hover:not(.active) { background: #0056b3; color: white; }
+
+    .tab-content {
+      background: white; padding: 20px; border-radius: 0 5px 5px 5px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px;
+    }
+
+    .form-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px; margin-bottom: 15px;
     }
     input, select {
-      width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px;
+      padding: 8px; border: 1px solid #ccc; border-radius: 5px;
+      width: 100%; box-sizing: border-box;
     }
-    button[type="submit"] {
-      background: var(--primary); color: white; border: none; padding: 0.75rem 1.5rem;
-      border-radius: 6px; cursor: pointer; font-weight: bold;
-    }
-    table {
-      width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-    th, td {
-      padding: 0.9rem; text-align: left; border-bottom: 1px solid #eee;
-    }
+    button.add { background: var(--success); color: white; }
+    button.sell { background: var(--danger); color: white; }
+    button.delete { background: #6c757d; color: white; }
+    button:hover.add { background: #218838; }
+    button:hover.sell { background: #c82333; }
+    button:hover.delete { background: #5a6268; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
     th { background: var(--primary); color: white; }
-    tr:last-child td { border-bottom: none; }
-    .btn-delete {
-      background: var(--danger); color: white; border: none; padding: 0.3rem 0.6rem;
-      border-radius: 4px; cursor: pointer; font-size: 0.85rem;
+    tr:nth-child(even) { background: #f9f9f9; }
+
+    .badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+    .status-tinggi { background: #d4edda; color: #155724; }
+    .status-sederhana { background: #fff3cd; color: #856404; }
+    .status-rendah { background: #f8d7da; color: #721c24; }
+
+    /* Stock Card Modal */
+    #stockCardModal {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none;
+      justify-content: center; align-items: center; z-index: 1000;
     }
-    .log-entry {
-      padding: 0.6rem 0; border-bottom: 1px dashed #eee; font-size: 0.95rem;
-      color: var(--gray);
+    #stockCard {
+      background: white; padding: 20px; border-radius: 10px; width: 90%; max-width: 600px;
+      max-height: 80vh; overflow-y: auto;
     }
-    .summary-card {
-      background: white; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.2rem;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-    .summary-value {
-      font-size: 1.8rem; font-weight: bold; color: var(--primary);
-    }
-    #status {
-      position: fixed; top: 12px; right: 12px; padding: 0.5rem 1rem; background: var(--success);
-      color: white; border-radius: 6px; z-index: 1000; display: none;
-    }
-    .batch-list {
-      margin-top: 0.5rem; font-size: 0.9rem; color: #555;
-    }
+    #stockCard h3 { margin-bottom: 15px; color: var(--primary); }
+    #closeStockCard { margin-top: 15px; background: #6c757d; color: white; padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; }
   </style>
 </head>
 <body>
 
-<!-- 🔒 PIN Access Modal -->
-<div id="auth-modal">
-  <div class="card">
-    <h3>Kata Laluan Akses</h3>
-    <p>Masukkan PIN untuk masuk</p>
-    <input type="password" id="pin-input" placeholder="Contoh: 1234" maxlength="4" />
-    <button onclick="checkPIN()">Masuk</button>
-  </div>
+<!-- LOGIN PAGE -->
+<div id="loginPage" class="active-page">
+  <form id="loginForm">
+    <h2>FIKOS Login</h2>
+    <input type="email" id="email" placeholder="Email" required />
+    <input type="password" id="password" placeholder="Password" required />
+    <button type="submit">Login</button>
+  </form>
 </div>
 
-<div id="status">Menyambung ke Firebase...</div>
-
-<header>
-  <div class="logo-text">
+<!-- DASHBOARD -->
+<div id="dashboard" class="container page">
+  <header>
     <h1>Perekodan Inventory</h1>
-    <p>Sistem Pengurusan Stok oleh Aliff</p>
-  </div>
-  <nav>
-    <button class="nav-btn active" data-page="dashboard">Dashboard</button>
-    <button class="nav-btn" data-page="master">Master List</button>
-    <button class="nav-btn" data-page="stockin">Stock In</button>
-    <button class="nav-btn" data-page="stockout">Stock Out</button>
-    <button class="nav-btn" data-page="log">Log</button>
-  </nav>
-</header>
+    <p>Sistem Pengurusan Stok oleh FIKOS</p>
+  </header>
 
-<main>
-  <!-- Dashboard -->
-  <div id="dashboard" class="page active">
-    <h2>📊 Dashboard</h2>
-    <div class="summary-card">
-      <p>Jumlah Jenis Item</p>
-      <div class="summary-value" id="total-items">0</div>
-    </div>
-    <div class="summary-card">
-      <p>Jumlah Unit Stok</p>
-      <div class="summary-value" id="total-units">0</div>
-    </div>
-    <div class="summary-card">
-      <p>Nilai Stok (RM)</p>
-      <div class="summary-value" id="total-value">0.00</div>
-    </div>
-    <div class="summary-card">
-      <p>Aktiviti Terkini</p>
-      <div id="latest-activity">Menyambung...</div>
-    </div>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="tab1">Tambah Item / Kategori</button>
+    <button class="tab-btn" data-tab="tab2">Rekod Jual</button>
+    <button class="tab-btn" data-tab="tab3">Senarai Inventori</button>
+    <button class="tab-btn" data-tab="tab4">Inventory Movement</button>
   </div>
 
-  <!-- Master List -->
-  <div id="master" class="page">
-    <h2>📋 Master List</h2>
+  <!-- TAB 1: TAMBAH ITEM / KATEGORI -->
+  <div id="tab1" class="tab-content">
+    <h3>Tambah Kategori</h3>
+    <div class="form-grid">
+      <input type="text" id="new_category_name" placeholder="Nama Kategori" />
+      <button id="addCategoryBtn" class="add">Tambah Kategori</button>
+      <button id="deleteCategoryBtn" class="delete">Padam Kategori</button>
+    </div>
+
+    <h3>Tambah Item Baru</h3>
+    <div class="form-grid">
+      <select id="item_category"></select>
+      <input type="text" id="item_sku" placeholder="Kod Item (auto jika kosong)" />
+      <input type="text" id="item_name" placeholder="Nama Item" />
+      <input type="number" id="item_qty" placeholder="Kuantiti" min="1" />
+      <input type="text" id="item_location" placeholder="Lokasi Barang" />
+      <input type="number" id="item_cost" placeholder="Harga Beli Seunit" min="0" step="0.01" />
+      <input type="number" id="item_price" placeholder="Harga Jual Seunit" min="0" step="0.01" />
+      <input type="number" id="item_min_stock" value="5" placeholder="Min Stok" min="0" />
+      <button id="addItemBtn" class="add">Tambah Item</button>
+      <button id="deleteItemBtn" class="delete">Padam Item</button>
+    </div>
+  </div>
+
+  <!-- TAB 2: REKOD JUAL -->
+  <div id="tab2" class="tab-content" style="display:none">
+    <h3>Rekod Jual</h3>
+    <div class="form-grid">
+      <select id="trans_category"></select>
+      <select id="trans_item"></select>
+      <input type="number" id="trans_qty" placeholder="Kuantiti" min="1" />
+      <button id="transBtn" class="sell">Jual</button>
+    </div>
+  </div>
+
+  <!-- TAB 3: SENARAI INVENTORI -->
+  <div id="tab3" class="tab-content" style="display:none">
+    <h3>Senarai Inventori</h3>
     <table>
       <thead>
         <tr>
-          <th>Item</th>
-          <th>Stok</th>
+          <th>Kod Item</th>
+          <th>Nama</th>
+          <th>Kategori</th>
+          <th>Kuantiti</th>
           <th>Lokasi</th>
-          <th>Nilai (RM)</th>
-          <th>Tindakan</th>
+          <th>Harga Beli</th>
+          <th>Harga Jual</th>
+          <th>Margin</th>
+          <th>Status</th>
         </tr>
       </thead>
-      <tbody id="item-table-body"></tbody>
+      <tbody id="inventoryTable"></tbody>
     </table>
-    <div id="stock-card-modal" style="display:none; margin-top:2rem; padding:1.5rem; background:white; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.1);">
-      <h3 id="card-item-name">Kad Stok: [Nama]</h3>
-      <p><strong>Baki Stok:</strong> <span id="card-qty"></span></p>
-      <p><strong>Nilai Stok:</strong> RM<span id="card-value"></span></p>
-      <p><strong>Lokasi:</strong> <span id="card-location"></span></p>
-      <h4>Batch Masuk:</h4>
-      <div id="card-batches"></div>
-      <button onclick="closeStockCard()" style="margin-top:1rem;">Tutup</button>
-    </div>
   </div>
 
-  <!-- Stock In -->
-  <div id="stockin" class="page">
-    <h2>📥 Stock In</h2>
-    <form id="form-in">
-      <div class="form-group">
-        <label>Nama Item</label>
-        <input type="text" id="in-name" required placeholder="Laptop Dell" />
-      </div>
-      <div class="form-group">
-        <label>Harga Seunit (RM)</label>
-        <input type="number" step="0.01" id="in-price" required placeholder="2500.00" />
-      </div>
-      <div class="form-group">
-        <label>Jumlah</label>
-        <input type="number" id="in-qty" min="1" required placeholder="5" />
-      </div>
-      <div class="form-group">
-        <label>Lokasi Simpanan</label>
-        <input type="text" id="in-location" required placeholder="Gudang A, Rak 3" />
-      </div>
-      <button type="submit">Tambah Stok</button>
-    </form>
+  <!-- TAB 4: INVENTORY MOVEMENT -->
+  <div id="tab4" class="tab-content" style="display:none">
+    <h3>Inventory Movement</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Kod Item</th>
+          <th>Tindakan</th>
+          <th>Kuantiti</th>
+          <th>Harga Seunit</th>
+          <th>Tarikh</th>
+        </tr>
+      </thead>
+      <tbody id="movementTable"></tbody>
+    </table>
   </div>
+</div>
 
-  <!-- Stock Out -->
-  <div id="stockout" class="page">
-    <h2>📤 Stock Out</h2>
-    <form id="form-out">
-      <div class="form-group">
-        <label>Nama Item</label>
-        <input type="text" id="out-name" required placeholder="Laptop Dell" />
-      </div>
-      <div class="form-group">
-        <label>Jumlah</label>
-        <input type="number" id="out-qty" min="1" required placeholder="2" />
-      </div>
-      <button type="submit">Keluarkan Stok</button>
-    </form>
+<!-- STOCK CARD MODAL -->
+<div id="stockCardModal">
+  <div id="stockCard">
+    <h3 id="stockCardTitle">Kad Stok: [Item]</h3>
+    <p><strong>Baki Stok:</strong> <span id="stockQty"></span></p>
+    <p><strong>Nilai Stok (RM):</strong> RM<span id="stockValue"></span></p>
+    <p><strong>Lokasi:</strong> <span id="stockLocation"></span></p>
+    <p><strong>Batch Masuk (FIFO):</strong></p>
+    <div id="batchList"></div>
+    <button id="closeStockCard">Tutup</button>
   </div>
+</div>
 
-  <!-- Log -->
-  <div id="log" class="page">
-    <h2>📜 Inventory Movement Log</h2>
-    <div id="log-entries"></div>
-  </div>
-</main>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+<script>
+// --- FIREBASE CONFIG ---
+const firebaseConfig = {
+  apiKey: "AIzaSyAIk6aEQJnuK4Vwn9gD3RZ2My6fi04DArM",
+  authDomain: "inventory-app-ab414.firebaseapp.com",
+  databaseURL: "https://inventory-app-ab414-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "inventory-app-ab414",
+  storageBucket: "inventory-app-ab414.firebasestorage.app",
+  messagingSenderId: "982818040940",
+  appId: "1:982818040940:web:bb439dcac05bea3bf97c49"
+};
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyAIk6aEQJnuK4Vwn9gD3RZ2My6fi04DArM",
-    authDomain: "inventory-app-ab414.firebaseapp.com",
-    databaseURL: "https://inventory-app-ab414-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "inventory-app-ab414",
-    storageBucket: "inventory-app-ab414.firebasestorage.app",
-    messagingSenderId: "982818040940",
-    appId: "1:982818040940:web:bb439dcac05bea3bf97c49"
-  };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const inventoryRef = db.ref('fikos/inventory');
+const movementRef = db.ref('fikos/movement');
+const categoriesRef = db.ref('fikos/categories');
+const lastSKURef = db.ref('fikos/lastSKU');
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-  const inventoryRef = ref(db, 'inventory');
+// --- STATE ---
+let categories = [];
+let inventory = [];
+let movement = [];
+let lastSKU = {};
 
-  let inventory = {};
-  let logs = [];
-  const ACCESS_PIN = '1234'; // Tukar ikut kehendak anda
-
-  function showStatus(msg, isError = false) {
-    let status = document.getElementById('status');
-    if (!status) {
-      status = document.createElement('div');
-      status.id = 'status';
-      status.style.cssText = `
-        position: fixed; top: 12px; right: 12px; padding: 0.5rem 1rem;
-        background: ${isError ? '#f72585' : '#4cc9f0'}; color: white;
-        border-radius: 6px; z-index: 1000;
-      `;
-      document.body.appendChild(status);
-    }
-    status.textContent = msg;
-    status.style.display = 'block';
-    setTimeout(() => status.style.display = 'none', 2000);
+// --- AUTH ---
+const loginForm = document.getElementById('loginForm');
+loginForm.addEventListener('submit', e => {
+  e.preventDefault();
+  const email = document.getElementById('email').value.trim();
+  const pass = document.getElementById('password').value;
+  if (email === 'alip1234@gmail.com' && pass === 'alip1234') {
+    document.getElementById('loginPage').classList.remove('active-page');
+    document.getElementById('dashboard').classList.add('active-page');
+    loadData();
+  } else {
+    alert('Email atau password salah!');
   }
+});
 
-  function saveData() {
-    set(inventoryRef, { inventory, logs })
-      .catch(err => console.error(err));
-  }
+// --- TABS ---
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).style.display = 'block';
+  });
+});
 
-  function addLog(type, item, qty, price = null, location = null) {
-    const entry = {
-      type,
-      item,
-      qty,
-      price,
-      location,
-      date: new Date().toISOString()
-    };
-    logs.unshift(entry); // latest on top
-    if (logs.length > 100) logs.pop(); // limit log
-    saveData();
-  }
+// --- LOAD DATA FROM FIREBASE ---
+function loadData() {
+  categoriesRef.on('value', snap => {
+    categories = snap.val() || [];
+    renderCategories();
+  });
+  inventoryRef.on('value', snap => {
+    inventory = snap.val() || [];
+    renderInventoryTable();
+  });
+  movementRef.on('value', snap => {
+    movement = snap.val() || [];
+    renderMovementTable();
+  });
+  db.ref('fikos/lastSKU').on('value', snap => {
+    lastSKU = snap.val() || {};
+  });
+}
 
-  function deleteItem(itemName) {
-    if (!confirm(`Hapus item "${itemName}" secara kekal?`)) return;
-    delete inventory[itemName];
-    addLog('DELETE', itemName, 0);
-    renderAll();
-  }
+// --- SAVE TO FIREBASE ---
+function saveData() {
+  inventoryRef.set(inventory);
+  movementRef.set(movement);
+  categoriesRef.set(categories);
+  db.ref('fikos/lastSKU').set(lastSKU);
+}
 
-  function showStockCard(itemName) {
-    const item = inventory[itemName];
-    if (!item) return;
+// --- RENDER ---
+function renderCategories() {
+  const selects = ['item_category', 'trans_category'];
+  selects.forEach(id => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = '<option value="">-- Pilih --</option>';
+    categories.forEach(cat => {
+      const opt = document.createElement('option');
+      opt.value = cat;
+      opt.textContent = cat;
+      sel.appendChild(opt);
+    });
+  });
+  renderTransItemDropdown();
+}
 
-    // Hitung nilai stok
-    let totalValue = 0;
-    for (const batch of item.batches) {
-      totalValue += batch.qty * batch.price;
-    }
+function renderTransItemDropdown() {
+  const cat = document.getElementById('trans_category').value;
+  const sel = document.getElementById('trans_item');
+  sel.innerHTML = '<option value="">-- Pilih Item --</option>';
+  inventory
+    .filter(i => i.category === cat)
+    .forEach(i => {
+      const opt = document.createElement('option');
+      opt.value = i.kodeItem;
+      opt.textContent = `${i.kodeItem} - ${i.name}`;
+      sel.appendChild(opt);
+    });
+}
 
-    // Dapatkan lokasi unik
-    const locations = [...new Set(item.batches.map(b => b.location))].join(', ');
+document.getElementById('trans_category').addEventListener('change', renderTransItemDropdown);
 
-    document.getElementById('card-item-name').textContent = `Kad Stok: ${itemName}`;
-    document.getElementById('card-qty').textContent = item.totalQty;
-    document.getElementById('card-value').textContent = totalValue.toFixed(2);
-    document.getElementById('card-location').textContent = locations;
+// --- STATUS STOK ---
+function getStatusClass(qty) {
+  if (qty >= 10) return 'status-tinggi';
+  if (qty >= 5) return 'status-sederhana';
+  return 'status-rendah';
+}
+function getStatusText(qty) {
+  if (qty >= 10) return 'Tinggi';
+  if (qty >= 5) return 'Sederhana';
+  return 'Rendah';
+}
 
-    // Senarai batch
-    const batchesDiv = document.getElementById('card-batches');
-    batchesDiv.innerHTML = '';
+// --- RENDER TABLES ---
+function renderInventoryTable() {
+  const tbody = document.getElementById('inventoryTable');
+  tbody.innerHTML = '';
+  inventory.forEach(i => {
+    const statusClass = getStatusClass(i.qty);
+    const statusText = getStatusText(i.qty);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><a href="#" onclick="showStockCard('${i.kodeItem}'); return false;">${i.kodeItem}</a></td>
+      <td>${i.name}</td>
+      <td>${i.category}</td>
+      <td>${i.qty}</td>
+      <td>${i.location}</td>
+      <td>${parseFloat(i.cost).toFixed(2)}</td>
+      <td>${parseFloat(i.price).toFixed(2)}</td>
+      <td>${(i.price - i.cost).toFixed(2)}</td>
+      <td><span class="badge ${statusClass}">${statusText}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderMovementTable() {
+  const tbody = document.getElementById('movementTable');
+  tbody.innerHTML = '';
+  movement.slice().reverse().forEach(m => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${m.kodeItem}</td>
+      <td>${m.action}</td>
+      <td>${m.qty}</td>
+      <td>${parseFloat(m.price).toFixed(2)}</td>
+      <td>${m.date}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// --- STOCK CARD ---
+function showStockCard(kodeItem) {
+  const item = inventory.find(i => i.kodeItem === kodeItem);
+  if (!item) return;
+
+  document.getElementById('stockCardTitle').textContent = `Kad Stok: ${item.name}`;
+  document.getElementById('stockQty').textContent = item.qty;
+  document.getElementById('stockLocation').textContent = item.location || '-';
+
+  // Nilai stok (jumlah semua batch)
+  let totalValue = 0;
+  if (item.batches && item.batches.length) {
+    totalValue = item.batches.reduce((sum, b) => sum + (b.qty * b.cost), 0);
+    const batchList = document.getElementById('batchList');
+    batchList.innerHTML = '';
     item.batches.forEach(b => {
       const div = document.createElement('div');
-      div.className = 'batch-list';
-      const date = new Date(b.date).toLocaleDateString('ms-MY');
-      div.textContent = `${date} — ${b.qty} unit @ RM${b.price.toFixed(2)} (${b.location})`;
-      batchesDiv.appendChild(div);
+      div.textContent = `${new Date(b.date).toLocaleString('ms-MY')} — ${b.qty} unit @ RM${b.cost.toFixed(2)} (${b.location || '-'})`;
+      batchList.appendChild(div);
     });
-
-    document.getElementById('stock-card-modal').style.display = 'block';
+  } else {
+    totalValue = item.qty * item.cost;
+    document.getElementById('batchList').innerHTML = '<em>Tiada data batch (versi lama)</em>';
   }
 
-  function closeStockCard() {
-    document.getElementById('stock-card-modal').style.display = 'none';
+  document.getElementById('stockValue').textContent = totalValue.toFixed(2);
+  document.getElementById('stockCardModal').style.display = 'flex';
+}
+
+document.getElementById('closeStockCard').addEventListener('click', () => {
+  document.getElementById('stockCardModal').style.display = 'none';
+});
+
+// --- TAMBAH KATEGORI ---
+document.getElementById('addCategoryBtn').addEventListener('click', () => {
+  const cat = document.getElementById('new_category_name').value.trim();
+  if (!cat) return alert('Nama kategori diperlukan');
+  if (categories.includes(cat)) return alert('Kategori sudah wujud');
+  categories.push(cat);
+  lastSKU[cat] = 0;
+  saveData();
+  renderCategories();
+  document.getElementById('new_category_name').value = '';
+});
+
+// --- PADAM KATEGORI ---
+document.getElementById('deleteCategoryBtn').addEventListener('click', () => {
+  const cat = document.getElementById('item_category').value;
+  if (!cat) return alert('Pilih kategori');
+  if (!confirm(`Padam kategori "${cat}" dan semua item di dalamnya?`)) return;
+  
+  inventory = inventory.filter(i => i.category !== cat);
+  movement.push({
+    kodeItem: '*',
+    action: `Padam kategori: ${cat}`,
+    qty: 0,
+    price: 0,
+    date: new Date().toLocaleString('ms-MY')
+  });
+  categories = categories.filter(c => c !== cat);
+  delete lastSKU[cat];
+  saveData();
+});
+
+// --- TAMBAH ITEM ---
+document.getElementById('addItemBtn').addEventListener('click', () => {
+  const cat = document.getElementById('item_category').value;
+  let kodeItem = document.getElementById('item_sku').value.trim();
+  const name = document.getElementById('item_name').value.trim();
+  const qty = parseInt(document.getElementById('item_qty').value);
+  const loc = document.getElementById('item_location').value.trim();
+  const cost = parseFloat(document.getElementById('item_cost').value);
+  const price = parseFloat(document.getElementById('item_price').value);
+  const minStock = parseInt(document.getElementById('item_min_stock').value) || 5;
+
+  if (!cat || !name || !qty || !cost || !price || qty <= 0 || cost < 0 || price < 0) {
+    return alert('Sila lengkapkan semua medan dengan betul');
   }
 
-  function renderAll() {
-    renderDashboard();
-    renderMasterList();
-    renderLog();
+  if (!kodeItem) {
+    lastSKU[cat] = (lastSKU[cat] || 0) + 1;
+    kodeItem = cat.substring(0, 3).toUpperCase() + '-' + String(lastSKU[cat]).padStart(3, '0');
   }
 
-  function renderDashboard() {
-    const totalItems = Object.keys(inventory).length;
-    let totalUnits = 0, totalValue = 0;
-    for (const item of Object.values(inventory)) {
-      totalUnits += item.totalQty;
-      for (const b of item.batches) {
-        totalValue += b.qty * b.price;
-      }
-    }
-    const latest = logs[0] ? 
-      `[${new Date(logs[0].date).toLocaleString('ms-MY')}] ${logs[0].type === 'IN' ? '📥' : '📤'} ${logs[0].item} (${logs[0].qty})` 
-      : "Tiada aktiviti";
-
-    document.getElementById('total-items').textContent = totalItems;
-    document.getElementById('total-units').textContent = totalUnits;
-    document.getElementById('total-value').textContent = totalValue.toFixed(2);
-    document.getElementById('latest-activity').textContent = latest;
+  if (inventory.some(i => i.kodeItem === kodeItem)) {
+    return alert('Kod Item sudah wujud');
   }
 
-  function renderMasterList() {
-    const tbody = document.getElementById('item-table-body');
-    tbody.innerHTML = '';
-    for (const [name, item] of Object.entries(inventory)) {
-      // Nilai stok
-      let value = 0;
-      for (const b of item.batches) value += b.qty * b.price;
-      const locations = [...new Set(item.batches.map(b => b.location))].join(', ');
+  // Simpan dalam batch (untuk FIFO)
+  const newItem = {
+    kodeItem,
+    name,
+    category: cat,
+    qty,
+    location: loc,
+    cost,
+    price,
+    minStock,
+    batches: [{
+      date: new Date().toISOString(),
+      qty,
+      cost,
+      location: loc
+    }]
+  };
 
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><a href="#" onclick="showStockCard('${name}'); return false;">${name}</a></td>
-        <td>${item.totalQty}</td>
-        <td>${locations}</td>
-        <td>RM${value.toFixed(2)}</td>
-        <td><button class="btn-delete" onclick="deleteItem('${name}')">🗑️</button></td>
-      `;
-      tbody.appendChild(tr);
-    }
-  }
+  inventory.push(newItem);
+  movement.push({
+    kodeItem,
+    action: 'Masuk',
+    qty,
+    price: cost,
+    date: new Date().toLocaleString('ms-MY')
+  });
 
-  function renderLog() {
-    const logDiv = document.getElementById('log-entries');
-    logDiv.innerHTML = '';
-    logs.forEach(entry => {
-      const date = new Date(entry.date).toLocaleString('ms-MY');
-      let text = `[${date}] `;
-      if (entry.type === 'IN') {
-        text += `📥 Stock In: ${entry.item} — ${entry.qty} unit @ RM${entry.price} (${entry.location})`;
-      } else if (entry.type === 'OUT') {
-        text += `📤 Stock Out: ${entry.item} — ${entry.qty} unit`;
-      } else if (entry.type === 'DELETE') {
-        text += `🗑️ Item dihapus: ${entry.item}`;
-      }
-      const div = document.createElement('div');
-      div.className = 'log-entry';
-      div.textContent = text;
-      logDiv.appendChild(div);
-    });
-  }
+  saveData();
+  alert(`Item ditambah: ${kodeItem}`);
+  document.getElementById('item_sku').value = '';
+  document.getElementById('item_name').value = '';
+  document.getElementById('item_qty').value = '';
+  document.getElementById('item_location').value = '';
+  document.getElementById('item_cost').value = '';
+  document.getElementById('item_price').value = '';
+  document.getElementById('item_min_stock').value = '5';
+});
 
-  // FIFO Logic for Stock Out
-  function processStockOut(itemName, qtyToOut) {
-    const item = inventory[itemName];
-    if (!item || item.totalQty < qtyToOut) return false;
+// --- PADAM ITEM ---
+document.getElementById('deleteItemBtn').addEventListener('click', () => {
+  const kodeItem = document.getElementById('item_sku').value.trim();
+  if (!kodeItem) return alert('Masukkan Kod Item untuk padam');
+  if (!confirm(`Padam item "${kodeItem}"?`)) return;
 
-    let remaining = qtyToOut;
-    let totalValueOut = 0;
+  inventory = inventory.filter(i => i.kodeItem !== kodeItem);
+  movement.push({
+    kodeItem,
+    action: 'Padam',
+    qty: 0,
+    price: 0,
+    date: new Date().toLocaleString('ms-MY')
+  });
+  saveData();
+});
 
-    // Ambil dari batch paling lama (FIFO)
+// --- REKOD JUAL (FIFO) ---
+document.getElementById('transBtn').addEventListener('click', () => {
+  const kodeItem = document.getElementById('trans_item').value;
+  const qty = parseInt(document.getElementById('trans_qty').value);
+  if (!kodeItem || qty <= 0) return alert('Isi maklumat jualan');
+
+  const item = inventory.find(i => i.kodeItem === kodeItem);
+  if (!item) return alert('Item tidak dijumpai');
+  if (qty > item.qty) return alert('Stok tidak mencukupi');
+
+  // FIFO: kurangkan dari batch paling lama
+  let remaining = qty;
+  let totalCost = 0;
+  if (item.batches && item.batches.length) {
     for (let i = 0; i < item.batches.length && remaining > 0; i++) {
       const batch = item.batches[i];
       if (batch.qty >= remaining) {
-        totalValueOut += remaining * batch.price;
+        totalCost += remaining * batch.cost;
         batch.qty -= remaining;
         remaining = 0;
-        if (batch.qty === 0) item.batches.splice(i, 1);
       } else {
-        totalValueOut += batch.qty * batch.price;
+        totalCost += batch.qty * batch.cost;
         remaining -= batch.qty;
         item.batches.splice(i, 1);
-        i--; // adjust index after splice
+        i--; // adjust index
       }
     }
-
-    item.totalQty = (item.totalQty || 0) - qtyToOut;
-    if (item.totalQty <= 0) delete inventory[itemName];
-    return true;
   }
 
-  // Navigation
-  document.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-      const page = btn.dataset.page;
-      document.getElementById(page)?.classList.add('active');
-      btn.classList.add('active');
-    });
+  item.qty -= qty;
+  movement.push({
+    kodeItem,
+    action: 'Jual',
+    qty,
+    price: item.price,
+    date: new Date().toLocaleString('ms-MY')
   });
 
-  // PIN Access
-  function checkPIN() {
-    const pin = document.getElementById('pin-input').value;
-    if (pin === ACCESS_PIN) {
-      document.getElementById('auth-modal').style.display = 'none';
-      showStatus('Selamat datang!');
-    } else {
-      alert('PIN salah!');
-    }
-  }
-  document.getElementById('pin-input').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') checkPIN();
-  });
+  saveData();
+  document.getElementById('trans_qty').value = '';
+});
 
-  // Forms
-  document.getElementById('form-in')?.addEventListener('submit', e => {
-    e.preventDefault();
-    const name = e.target.querySelector('#in-name').value.trim();
-    const price = parseFloat(e.target.querySelector('#in-price').value);
-    const qty = parseInt(e.target.querySelector('#in-qty').value);
-    const location = e.target.querySelector('#in-location').value.trim();
-    if (!name || !price || price <= 0 || !qty || qty <= 0 || !location) return;
-
-    if (!inventory[name]) {
-      inventory[name] = { totalQty: 0, batches: [] };
-    }
-    inventory[name].totalQty += qty;
-    inventory[name].batches.push({
-      date: new Date().toISOString(),
-      qty,
-      price,
-      location
-    });
-    addLog('IN', name, qty, price, location);
-    e.target.reset();
-    renderAll();
-  });
-
-  document.getElementById('form-out')?.addEventListener('submit', e => {
-    e.preventDefault();
-    const name = e.target.querySelector('#out-name').value.trim();
-    const qty = parseInt(e.target.querySelector('#out-qty').value);
-    if (!name || !qty || qty <= 0) return;
-
-    const success = processStockOut(name, qty);
-    if (!success) {
-      alert('Stok tidak mencukupi!');
-      return;
-    }
-    addLog('OUT', name, qty);
-    e.target.reset();
-    renderAll();
-  });
-
-  // Load from Firebase
-  onValue(inventoryRef, snapshot => {
-    const data = snapshot.val();
-    if (data) {
-      inventory = data.inventory || {};
-      logs = data.logs || [];
-      renderAll();
-      showStatus('✅ Sambungan aktif', false);
-    } else {
-      inventory = {};
-      logs = [];
-      renderAll();
-    }
-  });
 </script>
-
 </body>
 </html>
