@@ -260,6 +260,7 @@
             <th id="th-cat">Kategori</th>
             <th id="th-qty">Stok</th>
             <th id="th-loc">Lokasi</th>
+            <th id="th-date">Tarikh</th>
             <th id="th-cost">Beli</th>
             <th id="th-price">Jual</th>
             <th id="th-margin">Margin</th>
@@ -289,7 +290,7 @@
   </div>
 
   <footer>
-    <p>© 2025 FIKOS - Perekodan Inventory</p>
+    <p id="footer-title">© 2025 FIKOS - Perekodan Inventory</p>
     <p>MUHAMAD HAIQAL BIN SAIFUL HAZMI</p>
     <p>011-23778280 | muhamadhaiqal198@gmail.com</p>
     <p>NUR ALIFF ISKANDAR BIN AZAHARI</p>
@@ -304,23 +305,24 @@
     <p><strong id="stock-balance">Baki:</strong> <span id="stockQty"></span></p>
     <p><strong id="stock-value">Nilai Stok:</strong> RM<span id="stockValue"></span></p>
     <p><strong id="stock-location">Lokasi:</strong> <span id="stockLocation"></span></p>
+    <p><strong id="stock-date">Tarikh Ditambah:</strong> <span id="stockDate"></span></p>
     <p><strong id="stock-batch">Batch (FIFO):</strong></p>
     <div id="batchList" style="margin:12px 0;"></div>
     <button class="delete" id="closeStockCard" style="margin-top:12px;">Tutup</button>
   </div>
 </div>
 
-<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
 <script>
-  // --- PENYELARASAN BAHASA & TEMA ---
+  // --- TERJEMAHAN PENUH ---
   const translations = {
     ms: {
       pageTitle: "Perekodan Inventory",
       pageSubtitle: "Sistem Pengurusan Stok oleh FIKOS",
+      footerTitle: "© 2025 FIKOS - Perekodan Inventory",
       hello: "Hello,",
       tab1: "Item & Kategori",
       tab2: "Rekod Jual",
@@ -336,6 +338,7 @@
       thCat: "Kategori",
       thQty: "Stok",
       thLoc: "Lokasi",
+      thDate: "Tarikh",
       thCost: "Beli",
       thPrice: "Jual",
       thMargin: "Margin",
@@ -349,12 +352,36 @@
       stockBalance: "Baki:",
       stockValue: "Nilai Stok:",
       stockLocation: "Lokasi:",
+      stockDate: "Tarikh Ditambah:",
       stockBatch: "Batch (FIFO):",
-      signOut: "Sign Out"
+      signOut: "Sign Out",
+      addCategory: "Nama Kategori",
+      itemSku: "Kod Item",
+      itemName: "Nama Item",
+      itemQty: "Kuantiti",
+      itemLocation: "Lokasi",
+      itemCost: "Harga Beli",
+      itemPrice: "Harga Jual",
+      itemMinStock: "Min Stok",
+      addItem: "Tambah Item",
+      deleteItem: "Padam Item",
+      transQty: "Kuantiti",
+      sellBtn: "Jual",
+      statusTinggi: "Tinggi",
+      statusSederhana: "Sederhana",
+      statusRendah: "Rendah",
+      confirmDeleteCat: "Padam kategori ",
+      confirmDeleteItem: "Padam item ",
+      alertFill: "Sila lengkapkan medan",
+      alertExists: "Kod Item sudah wujud",
+      alertNoItem: "Item tidak dijumpai",
+      alertLowStock: "Stok tidak mencukupi",
+      alertAdded: "Item ditambah: "
     },
     en: {
       pageTitle: "Inventory Recording",
       pageSubtitle: "Stock Management System by FIKOS",
+      footerTitle: "© 2025 FIKOS - Inventory Recording",
       hello: "Hello,",
       tab1: "Items & Categories",
       tab2: "Sales Record",
@@ -370,6 +397,7 @@
       thCat: "Category",
       thQty: "Stock",
       thLoc: "Location",
+      thDate: "Date",
       thCost: "Cost",
       thPrice: "Price",
       thMargin: "Margin",
@@ -383,27 +411,51 @@
       stockBalance: "Balance:",
       stockValue: "Stock Value:",
       stockLocation: "Location:",
+      stockDate: "Date Added:",
       stockBatch: "Batch (FIFO):",
-      signOut: "Sign Out"
+      signOut: "Sign Out",
+      addCategory: "Category Name",
+      itemSku: "Item Code",
+      itemName: "Item Name",
+      itemQty: "Quantity",
+      itemLocation: "Location",
+      itemCost: "Purchase Price",
+      itemPrice: "Selling Price",
+      itemMinStock: "Min Stock",
+      addItem: "Add Item",
+      deleteItem: "Delete Item",
+      transQty: "Quantity",
+      sellBtn: "Sell",
+      statusTinggi: "High",
+      statusSederhana: "Medium",
+      statusRendah: "Low",
+      confirmDeleteCat: "Delete category ",
+      confirmDeleteItem: "Delete item ",
+      alertFill: "Please fill all fields",
+      alertExists: "Item code already exists",
+      alertNoItem: "Item not found",
+      alertLowStock: "Insufficient stock",
+      alertAdded: "Item added: "
     }
   };
 
-  // Muat pilihan pengguna
+  // --- STATE UTK BAHASA & TEMA ---
   let currentLang = localStorage.getItem('fikos_lang') || 'ms';
   let currentTheme = localStorage.getItem('fikos_theme') || 'light';
   let currentUserName = "";
 
-  // Aplikasi tema
   if (currentTheme === 'dark') {
     document.body.classList.add('dark-mode');
   }
 
-  // Kemas kini UI mengikut bahasa & tema
+  // --- KEMAS KINI BAHASA ---
   function updateLanguage() {
     const t = translations[currentLang];
     
+    // Header
     document.getElementById('page-title').textContent = t.pageTitle;
     document.getElementById('page-subtitle').textContent = t.pageSubtitle;
+    document.getElementById('footer-title').textContent = t.footerTitle;
     document.getElementById('user-greeting').textContent = `${t.hello} ${currentUserName}`;
     
     // Tabs
@@ -425,6 +477,7 @@
     document.getElementById('th-cat').textContent = t.thCat;
     document.getElementById('th-qty').textContent = t.thQty;
     document.getElementById('th-loc').textContent = t.thLoc;
+    document.getElementById('th-date').textContent = t.thDate;
     document.getElementById('th-cost').textContent = t.thCost;
     document.getElementById('th-price').textContent = t.thPrice;
     document.getElementById('th-margin').textContent = t.thMargin;
@@ -441,9 +494,26 @@
     document.getElementById('stock-balance').textContent = t.stockBalance;
     document.getElementById('stock-value').textContent = t.stockValue;
     document.getElementById('stock-location').textContent = t.stockLocation;
+    document.getElementById('stock-date').textContent = t.stockDate;
     document.getElementById('stock-batch').textContent = t.stockBatch;
     
-    // Simpan
+    // Button texts
+    document.getElementById('signOutBtn').textContent = t.signOut;
+    document.getElementById('addItemBtn').textContent = t.addItem;
+    document.getElementById('deleteItemBtn').textContent = t.deleteItem;
+    document.getElementById('transBtn').textContent = t.sellBtn;
+    
+    // Placeholders
+    document.getElementById('new_category_name').placeholder = t.addCategory;
+    document.getElementById('item_sku').placeholder = t.itemSku;
+    document.getElementById('item_name').placeholder = t.itemName;
+    document.getElementById('item_qty').placeholder = t.itemQty;
+    document.getElementById('item_location').placeholder = t.itemLocation;
+    document.getElementById('item_cost').placeholder = t.itemCost;
+    document.getElementById('item_price').placeholder = t.itemPrice;
+    document.getElementById('item_min_stock').placeholder = t.itemMinStock;
+    document.getElementById('trans_qty').placeholder = t.transQty;
+    
     localStorage.setItem('fikos_lang', currentLang);
   }
 
@@ -457,7 +527,7 @@
     localStorage.setItem('fikos_theme', currentTheme);
   }
 
-  // --- FIREBASE SETUP ---
+  // --- FIREBASE ---
   const firebaseConfig = {
     apiKey: "AIzaSyAIk6aEQJnuK4Vwn9gD3RZ2My6fi04DArM",
     authDomain: "inventory-app-ab414.firebaseapp.com",
@@ -483,7 +553,7 @@
     }
     currentUserUID = user.uid;
     currentUserName = user.displayName || user.email || "User";
-    updateLanguage(); // refresh nama
+    updateLanguage();
     loadData();
   });
 
@@ -495,9 +565,7 @@
   document.getElementById('themeToggle').onclick = toggleTheme;
   document.getElementById('signOutBtn').onclick = signOutUser;
 
-  // ... (SEMUA FUNGSI INVENTORI SAMA SEPERTI SEBELUM: loadData, saveData, render, FIFO, dll)
-
-  // Tabs toggle
+  // Tabs
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -507,46 +575,22 @@
     });
   });
 
-  // Render functions (sama, guna currentLang untuk placeholder jika perlu)
-
-  // Contoh: renderInventoryTable
-  function renderInventoryTable() {
-    const tbody = document.getElementById('inventoryTable');
-    tbody.innerHTML = '';
-    inventory.forEach(i => {
-      const minStock = i.minStock || 5;
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><a href="#" onclick="showStockCard('${i.kodeItem}'); return false;">${i.kodeItem}</a></td>
-        <td>${i.name}</td>
-        <td>${i.category}</td>
-        <td>${i.qty}</td>
-        <td>${i.location || '-'}</td>
-        <td>${parseFloat(i.cost).toFixed(2)}</td>
-        <td>${parseFloat(i.price).toFixed(2)}</td>
-        <td>${(i.price - i.cost).toFixed(2)}</td>
-        <td>${minStock}</td>
-        <td><span class="badge ${getStatusClass(i.qty)}">${getStatusText(i.qty)}</span></td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
-
-  // Fungsi getStatusClass & getStatusText (sama)
+  // --- FUNGSI BANTU ---
   function getStatusClass(qty) {
     if (qty >= 10) return 'status-tinggi';
     if (qty >= 5) return 'status-sederhana';
     return 'status-rendah';
   }
   function getStatusText(qty) {
-    if (qty >= 10) return currentLang === 'ms' ? 'Tinggi' : 'High';
-    if (qty >= 5) return currentLang === 'ms' ? 'Sederhana' : 'Medium';
-    return currentLang === 'ms' ? 'Rendah' : 'Low';
+    const t = translations[currentLang];
+    if (qty >= 10) return t.statusTinggi;
+    if (qty >= 5) return t.statusSederhana;
+    return t.statusRendah;
   }
 
-  // Sign Out
   async function signOutUser() {
-    if (confirm(currentLang === 'ms' ? "Log keluar daripada sistem?" : "Log out from system?")) {
+    const t = translations[currentLang];
+    if (confirm("Log out from system?")) {
       try {
         await auth.signOut();
         window.location.href = 'index.html';
@@ -556,7 +600,6 @@
     }
   }
 
-  // Load & Save data (sama)
   function loadData() {
     const uid = currentUserUID;
     const refs = {
@@ -580,13 +623,26 @@
     db.ref(`users/${uid}/lastSKU`).set(lastSKU);
   }
 
-  // ... (Tambah fungsi lain seperti renderCategories, addItemBtn, transBtn, dll — sama seperti versi sebelumnya)
+  function renderCategories() {
+    const t = translations[currentLang];
+    ['item_category', 'trans_category'].forEach(id => {
+      const sel = document.getElementById(id);
+      sel.innerHTML = `<option value="">-- ${t.itemCatSel || 'Pilih'} --</option>`;
+      categories.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        sel.appendChild(opt);
+      });
+    });
+    renderTransItemDropdown();
+  }
 
-  // Contoh: renderTransItemDropdown
   function renderTransItemDropdown() {
     const cat = document.getElementById('trans_category').value;
     const sel = document.getElementById('trans_item');
-    sel.innerHTML = '<option value="">-- ' + (currentLang === 'ms' ? 'Pilih Item' : 'Select Item') + ' --</option>';
+    const t = translations[currentLang];
+    sel.innerHTML = `<option value="">-- ${t.itemSel || 'Pilih Item'} --</option>`;
     inventory
       .filter(i => i.category === cat)
       .forEach(i => {
@@ -596,17 +652,183 @@
         sel.appendChild(opt);
       });
   }
+  document.getElementById('trans_category').addEventListener('change', renderTransItemDropdown);
 
-  // Placeholder untuk fungsi lain (anda boleh salin dari versi sebelumnya)
-  function renderCategories() { /* ... */ }
-  function renderMovementTable() { /* ... */ }
-  function showStockCard(kodeItem) { /* ... */ }
+  function renderInventoryTable() {
+    const t = translations[currentLang];
+    const tbody = document.getElementById('inventoryTable');
+    tbody.innerHTML = '';
+    inventory.forEach(i => {
+      const minStock = i.minStock || 5;
+      // Format tarikh tambah (dari item asal atau batch pertama)
+      const dateAdded = i.dateAdded ? new Date(i.dateAdded).toLocaleDateString('ms-MY') : 
+                        (i.batches && i.batches[0] ? new Date(i.batches[0].date).toLocaleDateString('ms-MY') : '-');
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><a href="#" onclick="showStockCard('${i.kodeItem}'); return false;">${i.kodeItem}</a></td>
+        <td>${i.name}</td>
+        <td>${i.category}</td>
+        <td>${i.qty}</td>
+        <td>${i.location || '-'}</td>
+        <td>${dateAdded}</td>
+        <td>${parseFloat(i.cost).toFixed(2)}</td>
+        <td>${parseFloat(i.price).toFixed(2)}</td>
+        <td>${(i.price - i.cost).toFixed(2)}</td>
+        <td>${minStock}</td>
+        <td><span class="badge ${getStatusClass(i.qty)}">${getStatusText(i.qty)}</span></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderMovementTable() {
+    const tbody = document.getElementById('movementTable');
+    tbody.innerHTML = '';
+    movement.slice().reverse().forEach(m => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${m.kodeItem}</td>
+        <td>${m.action}</td>
+        <td>${m.qty}</td>
+        <td>${parseFloat(m.price).toFixed(2)}</td>
+        <td>${m.date}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function showStockCard(kodeItem) {
+    const item = inventory.find(i => i.kodeItem === kodeItem);
+    if (!item) return;
+    
+    document.getElementById('stockCardTitle').textContent = `Kad Stok: ${item.name}`;
+    document.getElementById('stockQty').textContent = item.qty;
+    document.getElementById('stockLocation').textContent = item.location || '-';
+    document.getElementById('stockValue').textContent = (item.qty * item.cost).toFixed(2);
+    
+    // Tarikh ditambah
+    const dateAdded = item.dateAdded ? new Date(item.dateAdded).toLocaleString('ms-MY') : 
+                      (item.batches && item.batches[0] ? new Date(item.batches[0].date).toLocaleString('ms-MY') : '-');
+    document.getElementById('stockDate').textContent = dateAdded;
+    
+    // Batch list
+    const batchList = document.getElementById('batchList');
+    if (item.batches && item.batches.length) {
+      batchList.innerHTML = '';
+      item.batches.forEach(b => {
+        const div = document.createElement('div');
+        div.textContent = `${new Date(b.date).toLocaleString('ms-MY')} — ${b.qty} unit @ RM${b.cost.toFixed(2)} (${b.location || '-'})`;
+        batchList.appendChild(div);
+      });
+    } else {
+      batchList.innerHTML = '<em>Tiada data batch</em>';
+    }
+    
+    document.getElementById('stockCardModal').style.display = 'flex';
+  }
+
   document.getElementById('closeStockCard').addEventListener('click', () => {
     document.getElementById('stockCardModal').style.display = 'none';
   });
 
-  // Anda boleh tambah fungsi lain (addItem, delete, jual) di sini — struktur sama
+  // --- TAMBAH KATEGORI ---
+  document.getElementById('addCategoryBtn').addEventListener('click', () => {
+    const cat = document.getElementById('new_category_name').value.trim();
+    const t = translations[currentLang];
+    if (!cat) return alert(t.alertFill);
+    if (categories.includes(cat)) return alert('Kategori sudah wujud');
+    categories.push(cat);
+    lastSKU[cat] = 0;
+    saveData();
+    renderCategories();
+    document.getElementById('new_category_name').value = '';
+  });
 
+  // --- PADAM KATEGORI ---
+  document.getElementById('deleteCategoryBtn').addEventListener('click', () => {
+    const cat = document.getElementById('item_category').value;
+    const t = translations[currentLang];
+    if (!cat) return alert('Pilih kategori');
+    if (!confirm(`${t.confirmDeleteCat} "${cat}"?`)) return;
+    inventory = inventory.filter(i => i.category !== cat);
+    movement.push({ kodeItem: '*', action: `Delete category: ${cat}`, qty: 0, price: 0, date: new Date().toLocaleString('ms-MY') });
+    categories = categories.filter(c => c !== cat);
+    delete lastSKU[cat];
+    saveData();
+  });
+
+  // --- TAMBAH ITEM ---
+  document.getElementById('addItemBtn').addEventListener('click', () => {
+    const cat = document.getElementById('item_category').value;
+    let kodeItem = document.getElementById('item_sku').value.trim();
+    const name = document.getElementById('item_name').value.trim();
+    const qty = parseInt(document.getElementById('item_qty').value);
+    const loc = document.getElementById('item_location').value.trim();
+    const cost = parseFloat(document.getElementById('item_cost').value);
+    const price = parseFloat(document.getElementById('item_price').value);
+    const minStock = parseInt(document.getElementById('item_min_stock').value) || 5;
+    const t = translations[currentLang];
+
+    if (!cat || !name || !qty || !cost || !price || qty <= 0) return alert(t.alertFill);
+    if (!kodeItem) {
+      lastSKU[cat] = (lastSKU[cat] || 0) + 1;
+      kodeItem = cat.substring(0,3).toUpperCase() + '-' + String(lastSKU[cat]).padStart(3,'0');
+    }
+    if (inventory.some(i => i.kodeItem === kodeItem)) return alert(t.alertExists);
+
+    inventory.push({
+      kodeItem, name, category: cat, qty, location: loc, cost, price, minStock,
+      dateAdded: new Date().toISOString(), // 👈 TARIKH ITEM DITAMBAH
+      batches: [{ date: new Date().toISOString(), qty, cost, location: loc }]
+    });
+    movement.push({ kodeItem, action: 'Masuk', qty, price: cost, date: new Date().toLocaleString('ms-MY') });
+    saveData();
+    alert(`${t.alertAdded} ${kodeItem}`);
+    ['item_sku','item_name','item_qty','item_location','item_cost','item_price','item_min_stock'].forEach(id => {
+      document.getElementById(id).value = id === 'item_min_stock' ? '5' : '';
+    });
+  });
+
+  // --- PADAM ITEM ---
+  document.getElementById('deleteItemBtn').addEventListener('click', () => {
+    const kodeItem = document.getElementById('item_sku').value.trim();
+    const t = translations[currentLang];
+    if (!kodeItem) return alert('Masukkan Kod Item');
+    if (!confirm(`${t.confirmDeleteItem} "${kodeItem}"?`)) return;
+    inventory = inventory.filter(i => i.kodeItem !== kodeItem);
+    movement.push({ kodeItem, action: 'Padam', qty: 0, price: 0, date: new Date().toLocaleString('ms-MY') });
+    saveData();
+  });
+
+  // --- JUAL ---
+  document.getElementById('transBtn').addEventListener('click', () => {
+    const kodeItem = document.getElementById('trans_item').value;
+    const qty = parseInt(document.getElementById('trans_qty').value);
+    const t = translations[currentLang];
+    if (!kodeItem || qty <= 0) return alert('Isi maklumat jualan');
+    const item = inventory.find(i => i.kodeItem === kodeItem);
+    if (!item) return alert(t.alertNoItem);
+    if (qty > item.qty) return alert(t.alertLowStock);
+
+    let remaining = qty;
+    if (item.batches && item.batches.length) {
+      for (let i = 0; i < item.batches.length && remaining > 0; i++) {
+        const batch = item.batches[i];
+        if (batch.qty >= remaining) {
+          batch.qty -= remaining;
+          remaining = 0;
+        } else {
+          remaining -= batch.qty;
+          item.batches.splice(i, 1);
+          i--;
+        }
+      }
+    }
+    item.qty -= qty;
+    movement.push({ kodeItem, action: 'Jual', qty, price: item.price, date: new Date().toLocaleString('ms-MY') });
+    saveData();
+    document.getElementById('trans_qty').value = '';
+  });
 </script>
 </body>
 </html>
