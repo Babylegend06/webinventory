@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FIKOS - Login</title>
+  <style>
+    :root {
+      --glass-bg: rgba(255, 255, 255, 0.85);
+      --glass-border: rgba(255, 255, 255, 0.5);
+      --primary: #4361ee;
+      --primary-light: #4cc9f0;
+      --danger: #ff6b6b;
+      --text: #2b2d42;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: linear-gradient(135deg, #e0f7fa, #f5f7ff);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    .glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 36px;
+      width: 92%;
+      max-width: 380px;
+      box-shadow: 0 10px 40px rgba(67, 97, 238, 0.15);
+    }
+    .glass h2 {
+      text-align: center;
+      color: var(--primary);
+      font-weight: 800;
+      font-size: 28px;
+      margin-bottom: 28px;
+    }
+    .input-group {
+      margin-bottom: 16px;
+    }
+    input {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #ddd;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.7);
+      font-size: 16px;
+      outline: none;
+      transition: border 0.3s;
+    }
+    input:focus {
+      border-color: var(--primary);
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: var(--primary-light);
+    }
+    #error {
+      color: var(--danger);
+      text-align: center;
+      margin-top: 16px;
+      min-height: 20px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="glass">
+  <h2>FIKOS Login</h2>
+  <div class="input-group">
+    <input type="email" id="email" placeholder="alip1234@gmail.com" autocomplete="email" />
+  </div>
+  <div class="input-group">
+    <input type="password" id="password" placeholder="Password" autocomplete="current-password" />
+  </div>
+  <button onclick="handleLogin()">Login</button>
+  <div id="error"></div>
+</div>
+
+<!-- Firebase SDK (Compat Mode - Untuk GitHub Pages) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+
+<script>
+  // 🔑 Konfigurasi Firebase (dari console anda)
+  const firebaseConfig = {
+    apiKey: "AIzaSyAIk6aEQJnuK4Vwn9gD3RZ2My6fi04DArM",
+    authDomain: "inventory-app-ab414.firebaseapp.com",
+    projectId: "inventory-app-ab414",
+    storageBucket: "inventory-app-ab414.firebasestorage.app",
+    messagingSenderId: "982818040940",
+    appId: "1:982818040940:web:bb439dcac05bea3bf97c49"
+  };
+
+  // 🔧 Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+
+  // ✅ UID yang dibenarkan
+  const ALLOWED_UID = "18v7cNxp63OwwhwIZNmJdodG5wE3";
+
+  async function handleLogin() {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const errorDiv = document.getElementById('error');
+    errorDiv.textContent = '';
+
+    if (!email || !password) {
+      errorDiv.textContent = "Sila isi email dan password.";
+      return;
+    }
+
+    try {
+      // 🔐 Login dengan Firebase Auth
+      const userCredential = await auth.signInWithEmailAndPassword(email, password);
+      const user = userCredential.user;
+
+      // 🔒 Semak jika UID dibenarkan
+      if (user.uid !== ALLOWED_UID) {
+        await auth.signOut();
+        errorDiv.textContent = "⛔ Akses ditolak. Anda tidak dibenarkan.";
+        return;
+      }
+
+      // ✅ Login berjaya → redirect ke sistem inventori
+      window.location.href = 'index.html';
+    } catch (err) {
+      console.error(err);
+      errorDiv.textContent = "Ralat: " + (err.message || "Gagal login");
+    }
+  }
+
+  // Tekan Enter untuk login
+  document.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') handleLogin();
+  });
+</script>
+</body>
+</html>
