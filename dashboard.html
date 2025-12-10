@@ -21,6 +21,7 @@
       min-height: 100vh;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       color: var(--text);
+      padding-bottom: 60px;
     }
     .glass {
       background: var(--glass-bg);
@@ -37,10 +38,14 @@
       padding: 0 20px;
     }
     header {
-      text-align: center;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 28px;
+      flex-wrap: wrap;
+      gap: 10px;
     }
-    header h1 {
+    header .title-group h1 {
       font-size: 2.2rem;
       font-weight: 800;
       background: linear-gradient(90deg, var(--primary), var(--primary-light));
@@ -48,9 +53,18 @@
       background-clip: text;
       color: transparent;
     }
-    header p {
+    header .title-group p {
       color: var(--text-light);
       margin-top: 6px;
+    }
+    .sign-out-btn {
+      padding: 8px 16px;
+      background: #adb5bd;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
     }
     .tabs {
       display: flex;
@@ -140,14 +154,26 @@
     }
     .page { display: none; }
     .active-page { display: block; }
+
+    footer {
+      text-align: center;
+      color: var(--text);
+      font-size: 14px;
+      margin-top: 40px;
+      padding: 10px;
+    }
+    footer p { margin: 4px 0; }
   </style>
 </head>
 <body>
 
 <div class="container">
   <header>
-    <h1>Perekodan Inventory</h1>
-    <p>Sistem Pengurusan Stok oleh FIKOS</p>
+    <div class="title-group">
+      <h1>Perekodan Inventory</h1>
+      <p>Sistem Pengurusan Stok oleh FIKOS</p>
+    </div>
+    <button class="sign-out-btn" onclick="signOutUser()">Sign Out</button>
   </header>
 
   <div class="glass">
@@ -216,6 +242,14 @@
       </table>
     </div>
   </div>
+
+  <footer>
+    <p>© 2025 FIKOS - Perekodan Inventory</p>
+    <p>MUHAMAD HAIQAL BIN SAIFUL HAZMI</p>
+    <p>011-23778280 | muhamadhaiqal198@gmail.com</p>
+    <p>NUR ALIFF ISKANDAR BIN AZAHARI</p>
+    <p>019-9618783 | nuraliffiskandar060303@gmail.com</p>
+  </footer>
 </div>
 
 <!-- Stock Card Modal -->
@@ -231,13 +265,12 @@
   </div>
 </div>
 
-<!-- Firebase SDK (Compat Mode) -->
+<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
 <script>
-  // --- FIREBASE CONFIG ---
   const firebaseConfig = {
     apiKey: "AIzaSyAIk6aEQJnuK4Vwn9gD3RZ2My6fi04DArM",
     authDomain: "inventory-app-ab414.firebaseapp.com",
@@ -252,21 +285,63 @@
   const auth = firebase.auth();
   const db = firebase.database();
   const ALLOWED_UID = "18v7cNxp63OwwhwIZNmJdodG5wE3";
+  const uid = ALLOWED_UID;
 
-  // --- STATE ---
+  // Reference paths under user's UID
+  const inventoryRef = db.ref(`users/${uid}/inventory`);
+  const movementRef = db.ref(`users/${uid}/movement`);
+  const categoriesRef = db.ref(`users/${uid}/categories`);
+  const lastSKURef = db.ref(`users/${uid}/lastSKU`);
+
   let categories = [], inventory = [], movement = [], lastSKU = {};
 
-  // --- SEMAK LOGIN DAN INIT JIKA SAH ---
   auth.onAuthStateChanged(user => {
     if (!user || user.uid !== ALLOWED_UID) {
-      window.location.href = 'login.html';
+      window.location.href = 'index.html';
       return;
     }
-    // Load data dari Firebase
     loadData();
   });
 
-  // --- TABS ---
+  async function signOutUser() {
+    if (confirm("Log keluar daripada sistem?")) {
+      try {
+        await auth.signOut();
+        window.location.href = 'index.html';
+      } catch (err) {
+        alert("Gagal log keluar: " + err.message);
+      }
+    }
+  }
+
+  function loadData() {
+    categoriesRef.on('value', snap => {
+      categories = snap.val() || [];
+      renderCategories();
+    });
+    inventoryRef.on('value', snap => {
+      inventory = snap.val() || [];
+      renderInventoryTable();
+    });
+    movementRef.on('value', snap => {
+      movement = snap.val() || [];
+      renderMovementTable();
+    });
+    lastSKURef.on('value', snap => {
+      lastSKU = snap.val() || {};
+    });
+  }
+
+  function saveData() {
+    inventoryRef.set(inventory);
+    movementRef.set(movement);
+    categoriesRef.set(categories);
+    lastSKURef.set(lastSKU);
+  }
+
+  // ... (SEMUA FUNGSI RENDER, TAMBAH, JUAL, PADAM SAMA SEPERTI SEBELUM INI) ...
+
+  // Tabs
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -276,33 +351,6 @@
     });
   });
 
-  // --- LOAD DATA DARI FIREBASE ---
-  function loadData() {
-    db.ref('fikos/categories').on('value', snap => {
-      categories = snap.val() || [];
-      renderCategories();
-    });
-    db.ref('fikos/inventory').on('value', snap => {
-      inventory = snap.val() || [];
-      renderInventoryTable();
-    });
-    db.ref('fikos/movement').on('value', snap => {
-      movement = snap.val() || [];
-      renderMovementTable();
-    });
-    db.ref('fikos/lastSKU').on('value', snap => {
-      lastSKU = snap.val() || {};
-    });
-  }
-
-  function saveData() {
-    db.ref('fikos/inventory').set(inventory);
-    db.ref('fikos/movement').set(movement);
-    db.ref('fikos/categories').set(categories);
-    db.ref('fikos/lastSKU').set(lastSKU);
-  }
-
-  // --- RENDER ---
   function renderCategories() {
     ['item_category', 'trans_category'].forEach(id => {
       const sel = document.getElementById(id);
@@ -332,7 +380,6 @@
   }
   document.getElementById('trans_category').addEventListener('change', renderTransItemDropdown);
 
-  // --- STATUS ---
   function getStatusClass(qty) {
     if (qty >= 10) return 'status-tinggi';
     if (qty >= 5) return 'status-sederhana';
@@ -344,7 +391,6 @@
     return 'Rendah';
   }
 
-  // --- TABLES ---
   function renderInventoryTable() {
     const tbody = document.getElementById('inventoryTable');
     tbody.innerHTML = '';
@@ -381,7 +427,6 @@
     });
   }
 
-  // --- STOCK CARD ---
   function showStockCard(kodeItem) {
     const item = inventory.find(i => i.kodeItem === kodeItem);
     if (!item) return;
@@ -411,7 +456,6 @@
     document.getElementById('stockCardModal').style.display = 'none';
   });
 
-  // --- TAMBAH KATEGORI ---
   document.getElementById('addCategoryBtn').addEventListener('click', () => {
     const cat = document.getElementById('new_category_name').value.trim();
     if (!cat) return alert('Masukkan nama kategori');
@@ -423,7 +467,6 @@
     document.getElementById('new_category_name').value = '';
   });
 
-  // --- PADAM KATEGORI ---
   document.getElementById('deleteCategoryBtn').addEventListener('click', () => {
     const cat = document.getElementById('item_category').value;
     if (!cat) return alert('Pilih kategori');
@@ -435,7 +478,6 @@
     saveData();
   });
 
-  // --- TAMBAH ITEM ---
   document.getElementById('addItemBtn').addEventListener('click', () => {
     const cat = document.getElementById('item_category').value;
     let kodeItem = document.getElementById('item_sku').value.trim();
@@ -465,7 +507,6 @@
     });
   });
 
-  // --- PADAM ITEM ---
   document.getElementById('deleteItemBtn').addEventListener('click', () => {
     const kodeItem = document.getElementById('item_sku').value.trim();
     if (!kodeItem) return alert('Masukkan Kod Item');
@@ -475,7 +516,6 @@
     saveData();
   });
 
-  // --- JUAL (FIFO) ---
   document.getElementById('transBtn').addEventListener('click', () => {
     const kodeItem = document.getElementById('trans_item').value;
     const qty = parseInt(document.getElementById('trans_qty').value);
