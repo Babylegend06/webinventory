@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FIKOS - Login</title>
+  <title>FIKOS Login</title>
   <style>
     :root {
       --glass-bg: rgba(255, 255, 255, 0.85);
@@ -18,9 +18,11 @@
       background: linear-gradient(135deg, #e0f7fa, #f5f7ff);
       min-height: 100vh;
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      padding: 20px;
     }
     .glass {
       background: var(--glass-bg);
@@ -32,6 +34,7 @@
       width: 92%;
       max-width: 380px;
       box-shadow: 0 10px 40px rgba(67, 97, 238, 0.15);
+      margin-bottom: 30px;
     }
     .glass h2 {
       text-align: center;
@@ -40,18 +43,15 @@
       font-size: 28px;
       margin-bottom: 28px;
     }
-    .input-group {
-      margin-bottom: 16px;
-    }
     input {
       width: 100%;
       padding: 14px;
+      margin: 8px 0;
       border: 1px solid #ddd;
       border-radius: 14px;
       background: rgba(255,255,255,0.7);
       font-size: 16px;
       outline: none;
-      transition: border 0.3s;
     }
     input:focus {
       border-color: var(--primary);
@@ -78,28 +78,39 @@
       min-height: 20px;
       font-size: 14px;
     }
+    footer {
+      text-align: center;
+      color: var(--text);
+      font-size: 14px;
+      margin-top: auto;
+      padding: 10px;
+    }
+    footer p { margin: 4px 0; }
   </style>
 </head>
 <body>
 
 <div class="glass">
   <h2>FIKOS Login</h2>
-  <div class="input-group">
-    <input type="email" id="email" placeholder="alip1234@gmail.com" autocomplete="email" />
-  </div>
-  <div class="input-group">
-    <input type="password" id="password" placeholder="Password" autocomplete="current-password" />
-  </div>
+  <input type="email" id="email" placeholder="alip1234@gmail.com" value="alip1234@gmail.com" />
+  <input type="password" id="password" placeholder="Password" value="alip1234" />
   <button onclick="handleLogin()">Login</button>
   <div id="error"></div>
 </div>
 
-<!-- Firebase SDK (Compat Mode - Untuk GitHub Pages) -->
+<footer>
+  <p>© 2025 FIKOS - Perekodan Inventory</p>
+  <p>MUHAMAD HAIQAL BIN SAIFUL HAZMI</p>
+  <p>011-23778280 | muhamadhaiqal198@gmail.com</p>
+  <p>NUR ALIFF ISKANDAR BIN AZAHARI</p>
+  <p>019-9618783 | nuraliffiskandar060303@gmail.com</p>
+</footer>
+
+<!-- Firebase SDK (Compat Mode) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
 <script>
-  // 🔑 Konfigurasi Firebase (dari console anda)
   const firebaseConfig = {
     apiKey: "AIzaSyAIk6aEQJnuK4Vwn9gD3RZ2My6fi04DArM",
     authDomain: "inventory-app-ab414.firebaseapp.com",
@@ -109,11 +120,8 @@
     appId: "1:982818040940:web:bb439dcac05bea3bf97c49"
   };
 
-  // 🔧 Initialize Firebase
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
-
-  // ✅ UID yang dibenarkan
   const ALLOWED_UID = "18v7cNxp63OwwhwIZNmJdodG5wE3";
 
   async function handleLogin() {
@@ -128,26 +136,18 @@
     }
 
     try {
-      // 🔐 Login dengan Firebase Auth
       const userCredential = await auth.signInWithEmailAndPassword(email, password);
-      const user = userCredential.user;
-
-      // 🔒 Semak jika UID dibenarkan
-      if (user.uid !== ALLOWED_UID) {
+      if (userCredential.user.uid === ALLOWED_UID) {
+        window.location.href = 'dashboard.html';
+      } else {
         await auth.signOut();
-        errorDiv.textContent = "⛔ Akses ditolak. Anda tidak dibenarkan.";
-        return;
+        errorDiv.textContent = "⛔ Akses ditolak.";
       }
-
-      // ✅ Login berjaya → redirect ke sistem inventori
-      window.location.href = 'dashboard.html';
     } catch (err) {
-      console.error(err);
       errorDiv.textContent = "Ralat: " + (err.message || "Gagal login");
     }
   }
 
-  // Tekan Enter untuk login
   document.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') handleLogin();
   });
