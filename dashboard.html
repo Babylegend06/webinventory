@@ -40,7 +40,7 @@
     header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
       margin-bottom: 28px;
       flex-wrap: wrap;
       gap: 10px;
@@ -55,7 +55,12 @@
     }
     header .title-group p {
       color: var(--text-light);
-      margin-top: 6px;
+      margin: 4px 0;
+    }
+    #user-greeting {
+      font-size: 16px;
+      color: var(--primary);
+      font-weight: 600;
     }
     .sign-out-btn {
       padding: 8px 16px;
@@ -65,6 +70,7 @@
       border-radius: 12px;
       font-weight: 600;
       cursor: pointer;
+      align-self: flex-start;
     }
     .tabs {
       display: flex;
@@ -171,6 +177,7 @@
   <header>
     <div class="title-group">
       <h1>Perekodan Inventory</h1>
+      <p id="user-greeting">Loading...</p>
       <p>Sistem Pengurusan Stok oleh FIKOS</p>
     </div>
     <button class="sign-out-btn" onclick="signOutUser()">Sign Out</button>
@@ -222,8 +229,16 @@
       <table>
         <thead>
           <tr>
-            <th>Kod</th><th>Nama</th><th>Kategori</th><th>Stok</th><th>Lokasi</th>
-            <th>Beli</th><th>Jual</th><th>Margin</th><th>Status</th>
+            <th>Kod</th>
+            <th>Nama</th>
+            <th>Kategori</th>
+            <th>Stok</th>
+            <th>Lokasi</th>
+            <th>Beli</th>
+            <th>Jual</th>
+            <th>Margin</th>
+            <th>Min Stok</th> <!-- Added -->
+            <th>Status</th>
           </tr>
         </thead>
         <tbody id="inventoryTable"></tbody>
@@ -235,7 +250,11 @@
       <table>
         <thead>
           <tr>
-            <th>Kod</th><th>Tindakan</th><th>Kuantiti</th><th>Harga</th><th>Tarikh</th>
+            <th>Kod</th>
+            <th>Tindakan</th>
+            <th>Kuantiti</th>
+            <th>Harga</th>
+            <th>Tarikh</th>
           </tr>
         </thead>
         <tbody id="movementTable"></tbody>
@@ -294,6 +313,11 @@
       return;
     }
     currentUserUID = user.uid;
+
+    // 👇 Show "Hello, [Name/Email]"
+    let displayName = user.displayName || user.email || "Pengguna";
+    document.getElementById('user-greeting').textContent = `Hello, ${displayName}`;
+
     loadData();
   });
 
@@ -340,8 +364,7 @@
     db.ref(`users/${uid}/lastSKU`).set(lastSKU);
   }
 
-  // ... (SEMUA FUNGSI TAMBAH, JUAL, PADAM, RENDER SAMA SEPERTI SEBELUM INI) ...
-
+  // Tabs
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -395,6 +418,7 @@
     const tbody = document.getElementById('inventoryTable');
     tbody.innerHTML = '';
     inventory.forEach(i => {
+      const minStock = i.minStock || 5; // Default to 5 if not set
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td><a href="#" onclick="showStockCard('${i.kodeItem}'); return false;">${i.kodeItem}</a></td>
@@ -405,6 +429,7 @@
         <td>${parseFloat(i.cost).toFixed(2)}</td>
         <td>${parseFloat(i.price).toFixed(2)}</td>
         <td>${(i.price - i.cost).toFixed(2)}</td>
+        <td>${minStock}</td>
         <td><span class="badge ${getStatusClass(i.qty)}">${getStatusText(i.qty)}</span></td>
       `;
       tbody.appendChild(tr);
